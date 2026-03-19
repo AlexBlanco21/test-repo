@@ -1,0 +1,37 @@
+name: Check Outbound IPs (IPv4 & IPv6)
+
+on:
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: 'fncteu2inctd03'
+
+jobs:
+  check-outbound-ip:
+    runs-on: arc-runner-cert-set
+    strategy:
+      matrix:
+        iteration: [1,2,3,4,5]
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Print Attempt Number"
+        run: echo "Iteration ${{ matrix.iteration }}"
+
+      - name: "Print Runner Outbound IPv4"
+        run: |
+          echo "=== Runner Public Outbound IPv4 ==="
+          curl -4 -s https://ifconfig.me || echo "failed"
+
+      - name: "Test Azure Kudu FunctionApp Endpoint"
+        run: |
+          echo "=== Curl function main endpoint ==="
+          curl -I https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net || echo "failed"
+          
+          echo "=== Curl function Kudu endpoint ==="
+          curl -I https://${{ env.AZURE_FUNCTIONAPP_NAME }}.scm.azurewebsites.net || echo "failed"
